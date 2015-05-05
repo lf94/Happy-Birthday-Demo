@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+<title>Happy Birthday Samantha!</title>
+<script type="text/javascript" src="three.min.js"></script>
+<script type="text/javascript" src="MTLLoader.js"></script>
+<script type="text/javascript" src="OBJMTLLoader.js"></script>
+<script type="text/javascript" src="helvetiker_regular.typeface.js"></script>
+</head>
+
+<body>
+<script type="text/javascript">
+	var camera, scene, renderer;
+	var geometry, textGeo, material, text3d, cube;
+	var cube_vel = new Array();
+	var TOTAL_CUBE_CONFETTI = 10;
+	var MAX_CUBE = 100;
+
+	init();
+	animate();
+
+	var rotationMatrix
+	function 
+	rotateAroundObjectAxis( object, axis, radians ) 
+	{
+		rotationMatrix = new THREE.Matrix4();
+		rotationMatrix.makeRotationAxis( axis.normalize(), radians );
+		object.matrix.multiply( rotationMatrix ); // post-multiply
+		object.rotation.setEulerFromRotationMatrix(object.matrix, object.order);
+	}
+
+	function 
+	init3dtext()
+	{
+		var text = "Happy Birthday Samantha",
+			height = 50,
+			size = 70,
+			hover = 30,
+			curveSegments = 2,
+			bevelThickness = 1,
+			bevelSize = 1,
+			bevelSegments = 1,
+			bevelEnabled = false,
+			font = "helvetiker", // helvetiker, optimer, gentilis, droid sans, droid serif
+			weight = "normal", // normal bold
+			style = "normal"; // normal italic
+	
+		textGeo = new THREE.TextGeometry( text, {
+			size: size,
+			height: height,
+			curveSegments: curveSegments,
+			font: font,
+			weight: weight,
+			style: style,
+			bevelThickness: bevelThickness,
+			bevelSize: bevelSize,
+			bevelEnabled: bevelEnabled,
+		});
+	}
+
+
+	function 
+	createScene( geometry, materials ) 
+	{
+		var mesh = new THREE.Mesh( geometry, new THREE.MeshFaceMaterial( materials ) );
+		return mesh;
+	}
+
+	var cake;
+	function 
+	loadcake()
+	{
+		var loader = new THREE.OBJMTLLoader();
+		loader.addEventListener( 'load', function ( event ) {
+			var object = event.content;
+			var xAxis = new THREE.Vector3(1,0,0);
+			object.position.y = -window.innerHeight/2;
+			object.position.z = 500;
+			object.position.x = 0;
+			object.scale.set(10,10,10);
+			cake = object;
+			scene.add( object );
+		});
+		loader.load( "birthdaycake.obj", "birthdaycake.mtl" );
+	}
+
+
+	function 
+	randomcolor()
+	{
+		return Math.floor(Math.random()*16*16*16*16*16*16);
+	}
+	
+	function 
+	initscene()
+	{
+	        camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+		camera.position.z = 1000;
+	
+	        scene = new THREE.Scene();
+		var ambient = new THREE.AmbientLight( 0x101030 );
+		scene.add( ambient );
+	
+		var directionalLight = new THREE.DirectionalLight( 0xffeedd );
+		directionalLight.position.set( 0, 0, 1 ).normalize();
+		scene.add( directionalLight );
+	
+	
+	        geometry = new THREE.CubeGeometry( 32, 1, 32 );
+		cube = new Array();
+	
+		for(var i = 0; i < TOTAL_CUBE_CONFETTI; i++){
+			material = new THREE.MeshBasicMaterial( { color: randomcolor(), wireframe: false } );
+	     	   	cube[i] = new THREE.Mesh( geometry, material );
+	       	 	scene.add( cube[i] );
+			cube[i].position.y = -window.innerHeight;
+			cube[i].position.x = Math.floor(Math.random()*window.innerWidth+1) - Math.floor(Math.random()*window.innerWidth+1);
+			cube[i].position.z = Math.floor(Math.random()*1000);
+			cube_vel[i] = Math.floor(Math.random()*10)+1;
+		}
+	
+	        text3d = new THREE.Mesh( textGeo, material );
+	  scene.add(text3d);
+	
+	        renderer = new THREE.WebGLRenderer();
+	        renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer.setClearColor( 0xFFFFFF, 1 );
+	
+	
+	        document.body.appendChild( renderer.domElement );
+	}
+	
+	function 
+	init() 
+	{
+		init3dtext();
+		loadcake();
+		initscene();
+	}
+
+	var firsttime = 1;
+	function
+	slideInText()
+	{
+		if(firsttime == 1){
+			firsttime = 0;
+		}
+	}
+
+	var text3dactivate = 0;
+	function
+	floatRotateCake()
+	{
+		if(cake.position.y < 0){
+			cake.position.y = 0.000000001*Math.pow(cake.position.y, 2) + 0.997*cake.position.y + 0.1;
+			cake.rotation.x += 0.0018;
+			cake.position.z += 0.55;
+		}
+		else {
+			cake.position.y = 0;
+			text3dactivate = 1;
+		}
+	}
+
+	
+	var bgcolor = 0xffffff;
+	var count = 0;
+
+	function 
+	animate() {
+	        requestAnimationFrame( animate );
+		setTimeout(floatRotateCake, 1000*6);
+		count += 0.00000001;
+		if(count = 10000000000 && bgcolor > 0xFF8080){
+			bgcolor -= 0x000101;
+			count = 0;
+				renderer.setClearColor( bgcolor, 1 );
+		}
+
+		if(text3dactivate == 0){
+			slideInText();
+		}
+	
+		cubeconfetti();
+	        renderer.render( scene, camera );
+	}
+	
+	function 
+	cubeconfetti()
+	{
+		for(var i = 0; i < TOTAL_CUBE_CONFETTI; i++){
+			cube[i].position.y += cube_vel[i];
+			cube[i].rotation.x += 0.05;
+			cube[i].rotation.y += 0.03;
+			if(cube[i].position.y > window.innerHeight){
+				cube[i].position.y = -window.innerHeight;
+				cube[i].position.x = Math.floor(Math.random()*window.innerWidth+1) - Math.floor(Math.random()*window.innerWidth+1);
+				cube[i].position.z = Math.floor(Math.random()*1000);
+				cube_vel[i] = Math.floor(Math.random()*10)+1;
+				if(TOTAL_CUBE_CONFETTI < MAX_CUBE){
+					var oldcon = TOTAL_CUBE_CONFETTI;
+					TOTAL_CUBE_CONFETTI += 5;
+					for(var j = oldcon; j < TOTAL_CUBE_CONFETTI; j++){
+						material = new THREE.MeshBasicMaterial( { color: randomcolor(), wireframe: false } );
+	     	   				cube[j] = new THREE.Mesh( geometry, material );
+	       	 				scene.add( cube[j] );
+						cube[j].position.y = -window.innerHeight;
+						cube[j].position.x = Math.floor(Math.random()*window.innerWidth+1) - Math.floor(Math.random()*window.innerWidth+1);
+						cube[j].position.z = Math.floor(Math.random()*1000);
+						cube_vel[j] = Math.floor(Math.random()*10)+1;
+					}
+				}
+			}
+		}
+	}
+
+</script>
+<audio autoplay>
+  	<source src="Happy Birthday everyone ever - Je Mappelle.mp3" type="audio/mpeg">
+	<source src="hbd.ogg" type="audio/ogg">
+  Your browser does not support the audio element.
+</audio> 
+</body>
+</html>
